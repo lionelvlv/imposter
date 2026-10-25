@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Imposter">
+<meta name="theme-color" content="#101218">
+<title>Imposter</title>
+<style>
+/* Layout: one centered column of screens (setup, pass-and-reveal, discussion, result); one primary action pinned at the bottom of each */
+:root{
+  --bg:#101218; --surface:#191c25; --line:#2a2f3d; --fg:#eef0f6; --dim:#8d93a6;
+  --crew:#5cd6a8; --sus:#ff4d5e; --sus-deep:#3a1219;
+  --font:ui-rounded,"SF Pro Rounded",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;
+  -webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+main{min-height:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;
+  padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));
+  padding-block:calc(env(safe-area-inset-top,0px) + 18px) calc(env(safe-area-inset-bottom,0px) + 18px)}
+section{flex:1;display:flex;flex-direction:column;gap:22px}
+h1{margin:0;font-size:34px;font-weight:800;letter-spacing:-.02em}
+h1 span{color:var(--sus)}
+h2{margin:0;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.group{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.spacer{flex:1}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+.primary{width:100%;padding:18px;border-radius:16px;background:var(--fg);color:var(--bg);font-size:18px;font-weight:700}
+.primary:disabled{opacity:.3;cursor:default}
+.ghost{width:100%;padding:14px;border-radius:14px;border:1px solid var(--line);font-weight:600;color:var(--dim)}
+.players{display:flex;flex-direction:column;gap:8px}
+.player{display:flex;gap:8px}
+.player input{flex:1;min-width:0;font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;padding:12px 14px;-webkit-user-select:text;user-select:text}
+.player button{width:46px;border-radius:12px;background:var(--surface);border:1px solid var(--line);color:var(--dim);font-size:20px}
+.add{padding:12px;border-radius:12px;border:1px dashed var(--line);color:var(--dim);font-weight:600}
+.stepper{display:flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.stepper button{width:44px;height:42px;font-size:22px;color:var(--dim)}
+.stepper output{min-width:24px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:10px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--dim);font-weight:600}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;border-radius:14px;
+  background:var(--surface);border:1px solid var(--line);text-align:left;width:100%}
+.toggle .sw{flex:none;width:46px;height:28px;border-radius:999px;background:var(--line);position:relative;transition:background .2s}
+.toggle .sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--fg);transition:transform .2s}
+.toggle[aria-pressed="true"] .sw{background:var(--crew)}
+.toggle[aria-pressed="true"] .sw::after{transform:translateX(18px)}
+.toggle small{display:block;color:var(--dim);font-size:13px;margin-top:2px}
+.pass{text-align:center;display:flex;flex-direction:column;gap:6px;padding-top:12px}
+.pass .who{font-size:40px;font-weight:800;letter-spacing:-.02em;overflow-wrap:anywhere}
+.pass .count{color:var(--dim);font-variant-numeric:tabular-nums}
+.card{flex:1;min-height:300px;border-radius:26px;background:var(--surface);border:1px solid var(--line);
+  display:grid;place-items:center;text-align:center;padding:24px;touch-action:none;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:background .15s,border-color .15s}
+.card .cover{display:grid;gap:10px;color:var(--dim);font-weight:600}
+.card .cover b{font-size:56px;line-height:1}
+.card .face{display:none;gap:10px}
+.card.open .cover{display:none}
+.card.open .face{display:grid}
+.card .label{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.card .word{font-size:clamp(34px,10vw,52px);font-weight:800;letter-spacing:-.02em;line-height:1.05;overflow-wrap:anywhere}
+.card.open.sus{background:var(--sus-deep);border-color:var(--sus)}
+.card.open.sus .word{color:var(--sus)}
+.card.open:not(.sus) .word{color:var(--crew)}
+.big{text-align:center;display:grid;gap:8px;padding-top:24px}
+.big .who{font-size:44px;font-weight:800;letter-spacing:-.02em;overflow-wrap:anywhere}
+.timer{font-size:72px;font-weight:800;font-variant-numeric:tabular-nums;text-align:center;letter-spacing:-.02em}
+.timer.done{color:var(--sus)}
+.note{color:var(--dim);text-align:center;margin:0;text-wrap:balance}
+.reveal-list{display:grid;gap:8px;text-align:center}
+.reveal-list .who{font-size:40px;font-weight:800;color:var(--sus);overflow-wrap:anywhere}
+.answer{text-align:center;padding:18px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
+.answer .word{font-size:30px;font-weight:800;color:var(--crew)}
+.actions{display:grid;gap:10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+
+<section id="setup">
+  <h1>Imp<span>o</span>ster</h1>
+  <div class="group">
+    <div class="row"><h2>Players</h2><span id="pcount" class="note"></span></div>
+    <div class="players" id="players"></div>
+    <button class="add" id="addPlayer" type="button">+ Add player</button>
+  </div>
+  <div class="group">
+    <div class="row">
+      <h2>Imposters</h2>
+      <div class="stepper"><button type="button" id="impMinus" aria-label="Fewer imposters">−</button><output id="impCount">1</output><button type="button" id="impPlus" aria-label="More imposters">+</button></div>
+    </div>
+  </div>
+  <div class="group">
+    <h2>Categories</h2>
+    <div class="chips" id="cats"></div>
+  </div>
+  <div class="group">
+    <button class="toggle" type="button" id="hintToggle" aria-pressed="true"><span>Imposter sees the category<small>Makes bluffing easier</small></span><span class="sw"></span></button>
+    <div class="row">
+      <h2>Discussion timer</h2>
+      <div class="stepper"><button type="button" id="timeMinus" aria-label="Shorter timer">−</button><output id="timeOut">Off</output><button type="button" id="timePlus" aria-label="Longer timer">+</button></div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <button class="primary" id="start" type="button">Deal the words</button>
+</section>
+
+<section id="reveal" hidden>
+  <div class="pass"><span class="count" id="passCount"></span><span>Pass the phone to</span><span class="who" id="passName"></span></div>
+  <div class="card" id="card">
+    <div class="cover"><b>☝︎</b>Press and hold to see your word<br>Let go to hide it</div>
+    <div class="face"><span class="label" id="faceLabel"></span><span class="word" id="faceWord"></span><span class="label" id="faceHint"></span></div>
+  </div>
+  <button class="primary" id="next" type="button" disabled>Next player</button>
+</section>
+
+<section id="talk" hidden>
+  <div class="big"><h2>Goes first</h2><span class="who" id="firstName"></span></div>
+  <p class="note">Everyone says one word about the secret word, going around in a circle. Then vote on who the imposter is.</p>
+  <div class="timer" id="timer" hidden></div>
+  <div class="spacer"></div>
+  <div class="actions">
+    <button class="primary" id="showImp" type="button">Reveal the imposter</button>
+  </div>
+</section>
+
+<section id="result" hidden>
+  <div class="reveal-list"><h2 id="impTitle">The imposter was</h2><div id="impNames"></div></div>
+  <div class="answer"><h2>The word was</h2><div class="word" id="ansWord"></div><div class="note" id="ansCat"></div></div>
+  <div class="spacer"></div>
+  <div class="actions">
+    <button class="primary" id="again" type="button">Play again</button>
+    <button class="ghost" id="toSetup" type="button">Change players or settings</button>
+  </div>
+</section>
+
+</main>
+<script>
+const WORDS={
+  Food:["Pizza","Sushi","Tacos","Pancakes","Burrito","Ramen","Ice cream","Popcorn","Spaghetti","Cheeseburger","Croissant","Donut","Salad","Hot dog","Dumplings","Curry","Waffles","Nachos","Bagel","Lasagna","Fried chicken","Smoothie","Cereal","Steak","Mac and cheese"],
+  Animals:["Penguin","Giraffe","Shark","Elephant","Kangaroo","Octopus","Owl","Dolphin","Lion","Panda","Snake","Flamingo","Koala","Crocodile","Zebra","Bat","Turtle","Wolf","Camel","Peacock","Hamster","Gorilla","Jellyfish","Raccoon","Squirrel"],
+  Places:["Beach","Airport","Hospital","Library","Casino","Gym","Zoo","Movie theater","Museum","Prison","Space station","Cruise ship","Hotel","Supermarket","School","Church","Farm","Desert","Ski resort","Bank","Amusement park","Subway","Camping site","Nightclub","Dentist office"],
+  Jobs:["Firefighter","Chef","Pilot","Teacher","Dentist","Police officer","Astronaut","Lawyer","Barber","Plumber","Nurse","Magician","Lifeguard","Farmer","DJ","Mail carrier","Scientist","Waiter","Judge","Mechanic","Photographer","Clown","Personal trainer","Architect","Detective"],
+  Sports:["Soccer","Basketball","Tennis","Golf","Swimming","Boxing","Skateboarding","Bowling","Surfing","Volleyball","Baseball","Hockey","Skiing","Wrestling","Cycling","Archery","Badminton","Rugby","Fencing","Rock climbing","Ping pong","Gymnastics","Karate","Darts","Marathon"],
+  Things:["Umbrella","Toothbrush","Mirror","Candle","Backpack","Headphones","Pillow","Scissors","Microwave","Ladder","Wallet","Sunglasses","Remote control","Keys","Flashlight","Stapler","Blender","Hairdryer","Alarm clock","Shopping cart","Balloon","Trash can","Bathtub","Doorbell","Charger"],
+  Vehicles:["Bicycle","Helicopter","Submarine","Tractor","Ambulance","Motorcycle","Train","Hot air balloon","Scooter","Limousine","Fire truck","Canoe","Rocket","Bus","Taxi","Yacht","Tank","Golf cart","Skateboard","Monster truck"],
+  Hobbies:["Painting","Fishing","Gardening","Knitting","Video games","Photography","Baking","Hiking","Yoga","Karaoke","Chess","Camping","Dancing","Reading","Magic tricks","Pottery","Bird watching","Skydiving","Board games","Juggling"]
+};
+const $=id=>document.getElementById(id);
+const TIMES=[0,1,2,3,5];
+let cfg={players:["Player 1","Player 2","Player 3","Player 4"],imps:1,cats:Object.keys(WORDS),hint:true,time:0};
+try{Object.assign(cfg,JSON.parse(localStorage.getItem("imposter-cfg")||"{}"))}catch(e){}
+cfg.cats=cfg.cats.filter(c=>WORDS[c]); if(!cfg.cats.length)cfg.cats=Object.keys(WORDS);
+let used=[]; try{used=JSON.parse(localStorage.getItem("imposter-used")||"[]")}catch(e){}
+const save=()=>{try{localStorage.setItem("imposter-cfg",JSON.stringify(cfg));localStorage.setItem("imposter-used",JSON.stringify(used.slice(-120)))}catch(e){}};
+
+function show(id){for(const s of document.querySelectorAll("section"))s.hidden=s.id!==id;scrollTo(0,0)}
+const maxImps=()=>Math.max(1,Math.min(3,Math.floor((names().length-1)/2)));
+const names=()=>cfg.players.map((p,i)=>p.trim()||"Player "+(i+1));
+
+function renderPlayers(){
+  const box=$("players"); box.textContent="";
+  cfg.players.forEach((p,i)=>{
+    const row=document.createElement("div"); row.className="player";
+    const inp=document.createElement("input"); inp.id="player-"+i; inp.value=p; inp.placeholder="Player "+(i+1);
+    inp.maxLength=20; inp.autocomplete="off"; inp.setAttribute("aria-label","Player "+(i+1)+" name");
+    inp.addEventListener("input",()=>{cfg.players[i]=inp.value;save()});
+    const del=document.createElement("button"); del.type="button"; del.textContent="×"; del.setAttribute("aria-label","Remove player "+(i+1));
+    del.disabled=cfg.players.length<=3;
+    del.addEventListener("click",()=>{cfg.players.splice(i,1);renderAll()});
+    row.append(inp,del); box.append(row);
+  });
+  $("pcount").textContent=cfg.players.length+" players";
+}
+function renderCats(){
+  const box=$("cats"); box.textContent="";
+  for(const c of Object.keys(WORDS)){
+    const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=c;
+    b.setAttribute("aria-pressed",cfg.cats.includes(c));
+    b.addEventListener("click",()=>{
+      if(cfg.cats.includes(c)){if(cfg.cats.length>1)cfg.cats=cfg.cats.filter(x=>x!==c)}else cfg.cats.push(c);
+      renderAll();
+    });
+    box.append(b);
+  }
+}
+function renderAll(){
+  cfg.imps=Math.min(Math.max(1,cfg.imps),maxImps());
+  renderPlayers(); renderCats();
+  $("impCount").textContent=cfg.imps;
+  $("hintToggle").setAttribute("aria-pressed",cfg.hint);
+  $("timeOut").textContent=cfg.time?cfg.time+" min":"Off";
+  save();
+}
+$("addPlayer").onclick=()=>{if(cfg.players.length<20){cfg.players.push("");renderAll();$("player-"+(cfg.players.length-1)).focus()}};
+$("impMinus").onclick=()=>{cfg.imps--;renderAll()};
+$("impPlus").onclick=()=>{cfg.imps++;renderAll()};
+$("hintToggle").onclick=()=>{cfg.hint=!cfg.hint;renderAll()};
+$("timeMinus").onclick=()=>{cfg.time=TIMES[Math.max(0,TIMES.indexOf(cfg.time)-1)];renderAll()};
+$("timePlus").onclick=()=>{cfg.time=TIMES[Math.min(TIMES.length-1,TIMES.indexOf(cfg.time)+1)];renderAll()};
+
+const rand=n=>Math.random()*n|0;
+let round=null, turn=0, seen=false, tick=null;
+
+function deal(){
+  const cat=cfg.cats[rand(cfg.cats.length)];
+  let pool=WORDS[cat].filter(w=>!used.includes(w)); if(!pool.length)pool=WORDS[cat];
+  const word=pool[rand(pool.length)]; used.push(word);
+  const ps=names(), idx=ps.map((_,i)=>i);
+  for(let i=idx.length-1;i>0;i--){const j=rand(i+1);[idx[i],idx[j]]=[idx[j],idx[i]]}
+  round={cat,word,players:ps,imps:new Set(idx.slice(0,cfg.imps))};
+  save(); turn=0; keepAwake(); showTurn(); show("reveal");
+}
+function showTurn(){
+  seen=false; $("next").disabled=true; closeCard();
+  const last=turn===round.players.length-1;
+  $("passName").textContent=round.players[turn];
+  $("passCount").textContent=(turn+1)+" of "+round.players.length;
+  $("next").textContent=last?"Everyone has seen it":"Next player";
+  const sus=round.imps.has(turn), card=$("card");
+  card.classList.toggle("sus",sus);
+  $("faceLabel").textContent=sus?"You are the":"Your word";
+  $("faceWord").textContent=sus?"Imposter":round.word;
+  $("faceHint").textContent=sus?(cfg.hint?"Category: "+round.cat:"Blend in"):"Category: "+round.cat;
+}
+function openCard(e){e.preventDefault();$("card").classList.add("open");seen=true;$("next").disabled=false}
+function closeCard(){$("card").classList.remove("open")}
+const card=$("card");
+card.addEventListener("pointerdown",openCard);
+for(const ev of ["pointerup","pointercancel","pointerleave"])card.addEventListener(ev,closeCard);
+card.addEventListener("contextmenu",e=>e.preventDefault());
+
+$("start").onclick=deal;
+$("next").onclick=()=>{
+  if(!seen)return;
+  if(turn<round.players.length-1){turn++;showTurn();return}
+  startTalk();
+};
+function startTalk(){
+  $("firstName").textContent=round.players[rand(round.players.length)];
+  clearInterval(tick); const t=$("timer"); t.classList.remove("done");
+  t.hidden=!cfg.time;
+  if(cfg.time){
+    const end=Date.now()+cfg.time*60000;
+    const upd=()=>{const s=Math.max(0,Math.ceil((end-Date.now())/1000));
+      t.textContent=s?Math.floor(s/60)+":"+String(s%60).padStart(2,"0"):"Vote!";
+      if(!s){t.classList.add("done");clearInterval(tick)}};
+    upd(); tick=setInterval(upd,250);
+  }
+  armReveal(); show("talk");
+}
+let armed=false;
+function armReveal(){armed=false;$("showImp").textContent="Reveal the imposter"}
+$("showImp").onclick=()=>{
+  if(!armed){armed=true;$("showImp").textContent="Tap again once you have voted";return}
+  clearInterval(tick);
+  const imps=[...round.imps].map(i=>round.players[i]);
+  $("impTitle").textContent=imps.length>1?"The imposters were":"The imposter was";
+  const box=$("impNames"); box.textContent="";
+  for(const n of imps){const d=document.createElement("div");d.className="who";d.textContent=n;box.append(d)}
+  $("ansWord").textContent=round.word; $("ansCat").textContent=round.cat;
+  show("result");
+};
+$("again").onclick=deal;
+$("toSetup").onclick=()=>{renderAll();show("setup")};
+
+let wake=null;
+async function keepAwake(){try{if(!wake&&navigator.wakeLock){wake=await navigator.wakeLock.request("screen");wake.addEventListener("release",()=>wake=null)}}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&round)keepAwake()});
+
+renderAll();
+</script>
+</body></html>
