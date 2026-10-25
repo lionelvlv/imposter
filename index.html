@@ -136,6 +136,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--fg);outline-off
 <section id="result" hidden>
   <div class="reveal-list"><h2 id="impTitle">The imposter was</h2><div id="impNames"></div></div>
   <div class="answer"><h2>The word was</h2><div class="word" id="ansWord"></div><div class="note" id="ansCat"></div></div>
+  <p class="note" id="penalty"></p>
   <div class="spacer"></div>
   <div class="actions">
     <button class="primary" id="again" type="button">Play again</button>
@@ -145,16 +146,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--fg);outline-off
 
 </main>
 <script>
-const WORDS={
-  Food:["Pizza","Sushi","Tacos","Pancakes","Burrito","Ramen","Ice cream","Popcorn","Spaghetti","Cheeseburger","Croissant","Donut","Salad","Hot dog","Dumplings","Curry","Waffles","Nachos","Bagel","Lasagna","Fried chicken","Smoothie","Cereal","Steak","Mac and cheese"],
-  Animals:["Penguin","Giraffe","Shark","Elephant","Kangaroo","Octopus","Owl","Dolphin","Lion","Panda","Snake","Flamingo","Koala","Crocodile","Zebra","Bat","Turtle","Wolf","Camel","Peacock","Hamster","Gorilla","Jellyfish","Raccoon","Squirrel"],
-  Places:["Beach","Airport","Hospital","Library","Casino","Gym","Zoo","Movie theater","Museum","Prison","Space station","Cruise ship","Hotel","Supermarket","School","Church","Farm","Desert","Ski resort","Bank","Amusement park","Subway","Camping site","Nightclub","Dentist office"],
-  Jobs:["Firefighter","Chef","Pilot","Teacher","Dentist","Police officer","Astronaut","Lawyer","Barber","Plumber","Nurse","Magician","Lifeguard","Farmer","DJ","Mail carrier","Scientist","Waiter","Judge","Mechanic","Photographer","Clown","Personal trainer","Architect","Detective"],
-  Sports:["Soccer","Basketball","Tennis","Golf","Swimming","Boxing","Skateboarding","Bowling","Surfing","Volleyball","Baseball","Hockey","Skiing","Wrestling","Cycling","Archery","Badminton","Rugby","Fencing","Rock climbing","Ping pong","Gymnastics","Karate","Darts","Marathon"],
-  Things:["Umbrella","Toothbrush","Mirror","Candle","Backpack","Headphones","Pillow","Scissors","Microwave","Ladder","Wallet","Sunglasses","Remote control","Keys","Flashlight","Stapler","Blender","Hairdryer","Alarm clock","Shopping cart","Balloon","Trash can","Bathtub","Doorbell","Charger"],
-  Vehicles:["Bicycle","Helicopter","Submarine","Tractor","Ambulance","Motorcycle","Train","Hot air balloon","Scooter","Limousine","Fire truck","Canoe","Rocket","Bus","Taxi","Yacht","Tank","Golf cart","Skateboard","Monster truck"],
-  Hobbies:["Painting","Fishing","Gardening","Knitting","Video games","Photography","Baking","Hiking","Yoga","Karaoke","Chess","Camping","Dancing","Reading","Magic tricks","Pottery","Bird watching","Skydiving","Board games","Juggling"]
-};
+const WORDS={"College": ["Finals week", "Dining hall", "RA", "Dorm room", "Frat house", "Lecture hall", "Office hours", "All-nighter", "Group project", "Library", "Study abroad", "Roommate", "Spring break", "Rush week", "Tailgate", "Student loans", "Syllabus", "Sorority", "Commencement", "Meal swipes", "Academic probation", "8am class", "Dorm shower", "Campus police"], "Parties": ["Beer pong", "Flip cup", "Keg stand", "Jungle juice", "Pregame", "Afterparty", "Hangover", "Blackout", "Body shot", "Kings cup", "Never have I ever", "Strip poker", "Red solo cup", "House party", "Fake ID", "Darty", "Noise complaint", "Bouncer", "Shotgunning a beer", "Theme party", "Drinking game", "Aux cord", "Basement party", "Puke bucket", "Truth or dare"], "Hookups": ["Situationship", "Ghosting", "Sneaky link", "Walk of shame", "Hickey", "Tinder", "Hinge", "Friends with benefits", "First date", "Ex", "Booty call", "Left on read", "Rebound", "Breakup text", "Wingman", "Third wheel", "Morning after", "Making out", "Crush", "Dating app bio", "Seven minutes in heaven", "Spin the bottle", "Thirst trap"], "Drinks": ["Tequila", "Vodka", "White Claw", "Four Loko", "Fireball", "Jägermeister", "Natty Light", "Margarita", "Boxed wine", "Mimosa", "Jello shot", "Long Island iced tea", "Sake bomb", "Rum and Coke", "Espresso martini", "Whiskey", "Champagne", "Edible", "Vape", "Red Bull vodka"], "Bad decisions": ["Drunk text", "Spontaneous tattoo", "3am McDonald's", "Skinny dipping", "Streaking", "Getting kicked out", "Losing your phone", "Calling your ex", "Crying in the bathroom", "Sleeping through an exam", "Puking in an Uber", "Drunk online shopping", "Texting the wrong group chat", "2am piercing", "Hooking up with a roommate", "Waking up on the couch", "Stealing a traffic cone", "Ordering Uber Eats at 4am", "Going to class still drunk"]};
 const $=id=>document.getElementById(id);
 const TIMES=[0,1,2,3,5];
 let cfg={players:["Player 1","Player 2","Player 3","Player 4"],imps:1,cats:Object.keys(WORDS),hint:true,time:0};
@@ -267,6 +259,7 @@ $("showImp").onclick=()=>{
   $("impTitle").textContent=imps.length>1?"The imposters were":"The imposter was";
   const box=$("impNames"); box.textContent="";
   for(const n of imps){const d=document.createElement("div");d.className="who";d.textContent=n;box.append(d)}
+  $("penalty").textContent=(imps.length>1?"Imposters":"Imposter")+" caught? They finish their drink. Got away with it? Everyone who voted wrong drinks.";
   $("ansWord").textContent=round.word; $("ansCat").textContent=round.cat;
   show("result");
 };
